@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 const defaultItemValue = {
-  name: '', id: 0
+  title: '', searchcontacttitle: '', searchtitle: '', emailtitle: '', fulltitle: '', id: 0
 };
 
 export default class SearchableDropDown extends Component {
@@ -19,6 +19,7 @@ export default class SearchableDropDown extends Component {
     this.renderFlatList = this.renderFlatList.bind(this);
     this.searchedItems = this.searchedItems.bind(this);
     this.renderItems = this.renderItems.bind(this);
+
     this.state = {
       item: {},
       listItems: [],
@@ -30,25 +31,25 @@ export default class SearchableDropDown extends Component {
     if (this.state.focus) {
       const flatListPorps = { ...this.props.listProps };
       const oldSupport = [
-        { key: 'keyboardShouldPersistTaps', val: 'always' }, 
-        { key: 'nestedScrollEnabled', val : false },
-        { key: 'style', val : { ...this.props.itemsContainerStyle } },
-        { key: 'data', val : this.state.listItems },
-        { key: 'keyExtractor', val : (item, index) => index.toString() },
-        { key: 'renderItem', val : ({ item, index }) => this.renderItems(item, index) },
+        { key: 'keyboardShouldPersistTaps', val: 'always' },
+        { key: 'nestedScrollEnabled', val: true },
+        { key: 'style', val: { ...this.props.itemsContainerStyle } },
+        { key: 'data', val: this.state.listItems },
+        { key: 'keyExtractor', val: (item, index) => index.toString() },
+        { key: 'renderItem', val: ({ item, index }) => this.renderItems(item, index) },
       ];
       oldSupport.forEach((kv) => {
-        if(!Object.keys(flatListPorps).includes(kv.key)) {
+        if (!Object.keys(flatListPorps).includes(kv.key)) {
           flatListPorps[kv.key] = kv.val;
         } else {
-          if(kv.key === 'style') {
+          if (kv.key === 'style') {
             flatListPorps['style'] = kv.val;
           }
         }
       });
       return (
         <FlatList
-          { ...flatListPorps }
+          {...flatListPorps}
         />
       );
     }
@@ -70,16 +71,29 @@ export default class SearchableDropDown extends Component {
   searchedItems = searchedText => {
     let setSort = this.props.setSort;
     if (!setSort && typeof setSort !== 'function') {
-        setSort = (item, searchedText) => { 
-          return item.name.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
-        };
+      setSort = (item, searchedText) => {
+        if (item.title && item.title !== '')
+          return item.title.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
+        else if (item.searchtitle && item.searchtitle !== '')
+          return item.searchtitle.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
+        else if (item.searchcontacttitle && item.searchcontacttitle !== '')
+          return item.searchcontacttitle.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
+        else if (item.emailtitle && item.emailtitle !== '')
+          return item.emailtitle.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
+        else if (item.fulltitle && item.fulltitle !== '')
+          return item.fulltitle.toLowerCase().indexOf(searchedText.toLowerCase()) > -1
+      };
     }
     var ac = this.props.items.filter((item) => {
       return setSort(item, searchedText);
     });
     let item = {
       id: -1,
-      name: searchedText
+      title: searchedText,
+      emailtitle: searchedText,
+      fulltitle: searchedText,
+      searchtitle: searchedText,
+      searchcontacttitle: searchedText,
     };
     this.setState({ listItems: ac, item: item });
     const onTextChange = this.props.onTextChange || this.props.textInputProps.onTextChange || this.props.onChangeText || this.props.textInputProps.onChangeText;
@@ -91,31 +105,41 @@ export default class SearchableDropDown extends Component {
   };
 
   renderItems = (item, index) => {
-    if(this.props.multi && this.props.selectedItems && this.props.selectedItems.length > 0) {
+    if (this.props.multi && this.props.selectedItems && this.props.selectedItems.length > 0) {
       return (
-          this.props.selectedItems.find(sitem => sitem.id === item.id) 
-          ? 
+        this.props.selectedItems.find(sitem => sitem.id === item.id)
+          ?
           <TouchableOpacity style={{ ...this.props.itemStyle, flex: 1, flexDirection: 'row' }}>
             <View style={{ flex: 0.9, flexDirection: 'row', alignItems: 'flex-start' }}>
-              <Text>{ item.name }</Text>
+              <Text>{item.title && item.title !== ''
+                ? item.title : item.searchcontacttitle && item.searchcontacttitle !== ''
+                ? item.searchcontacttitle : item.searchtitle && item.searchtitle !== ''
+                  ? item.searchtitle : item.emailtitle && item.emailtitle !== ''
+                    ? item.emailtitle : item.fulltitle && item.fulltitle !== ''
+                      ? item.fulltitle : null}</Text>
             </View>
             <View style={{ flex: 0.1, flexDirection: 'row', alignItems: 'flex-end' }}>
-              <TouchableOpacity onPress={() => setTimeout(() => { this.props.onRemoveItem(item, index) }, 0) } style={{ backgroundColor: '#f16d6b', alignItems: 'center', justifyContent: 'center', width: 25, height: 25, borderRadius: 100, marginLeft: 10}}>
+              <TouchableOpacity onPress={() => setTimeout(() => { this.props.onRemoveItem(item, index) }, 0)} style={{ backgroundColor: '#f16d6b', alignItems: 'center', justifyContent: 'center', width: 25, height: 25, borderRadius: 100, marginLeft: 10 }}>
                 <Text>X</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
-         :
+          :
           <TouchableOpacity
-          onPress={() => {
-            this.setState({ item: item });
-            setTimeout(() => {
-              this.props.onItemSelect(item);
-            }, 0);
-          }}
-          style={{ ...this.props.itemStyle, flex: 1, flexDirection: 'row' }}>
+            onPress={() => {
+              this.setState({ item: item });
+              setTimeout(() => {
+                this.props.onItemSelect(item);
+              }, 0);
+            }}
+            style={{ ...this.props.itemStyle, flex: 1, flexDirection: 'row' }}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start' }}>
-              <Text>{ item.name }</Text>
+              <Text>{item.title && item.title !== ''
+                ? item.title : item.searchcontacttitle && item.searchcontacttitle !== ''
+                ? item.searchcontacttitle : item.searchtitle && item.searchtitle !== ''
+                  ? item.searchtitle : item.emailtitle && item.emailtitle !== ''
+                    ? item.emailtitle : item.fulltitle && item.fulltitle !== ''
+                      ? item.fulltitle : null}</Text>
             </View>
           </TouchableOpacity>
       )
@@ -135,12 +159,22 @@ export default class SearchableDropDown extends Component {
             }, 0);
           }}
         >
-          { 
-            this.props.selectedItems && this.props.selectedItems.length > 0 && this.props.selectedItems.find(x => x.id === item.id) 
-            ?
-              <Text style={{ ...this.props.itemTextStyle }}>{item.name}</Text>
-            :
-              <Text style={{ ...this.props.itemTextStyle }}>{item.name}</Text>
+          {
+            this.props.selectedItems && this.props.selectedItems.length > 0 && this.props.selectedItems.find(x => x.id === item.id)
+              ?
+              <Text style={{ ...this.props.itemTextStyle }}>{item.title && item.title !== ''
+                ? item.title : item.searchcontacttitle && item.searchcontacttitle !== ''
+                ? item.searchcontacttitle : item.searchtitle && item.searchtitle !== ''
+                  ? item.searchtitle : item.emailtitle && item.emailtitle !== ''
+                    ? item.emailtitle : item.fulltitle && item.fulltitle !== ''
+                      ? item.fulltitle : null}</Text>
+              :
+              <Text style={{ ...this.props.itemTextStyle }}>{item.title && item.title !== ''
+                ? item.title : item.searchcontacttitle && item.searchcontacttitle !== ''
+                ? item.searchcontacttitle : item.searchtitle && item.searchtitle !== ''
+                  ? item.searchtitle : item.emailtitle && item.emailtitle !== ''
+                    ? item.emailtitle : item.fulltitle && item.fulltitle !== ''
+                      ? item.fulltitle : null}</Text>
           }
         </TouchableOpacity>
       );
@@ -154,11 +188,11 @@ export default class SearchableDropDown extends Component {
   renderTextInput = () => {
     const textInputProps = { ...this.props.textInputProps };
     const oldSupport = [
-      { key: 'ref', val: e => (this.input = e) }, 
-      { key: 'onTextChange', val: (text) => { this.searchedItems(text) } }, 
-      { key: 'underlineColorAndroid', val: this.props.underlineColorAndroid }, 
-      { 
-        key: 'onFocus', 
+      { key: 'ref', val: e => (this.input = e) },
+      { key: 'onTextChange', val: (text) => { this.searchedItems(text) } },
+      { key: 'underlineColorAndroid', val: this.props.underlineColorAndroid },
+      {
+        key: 'onFocus',
         val: () => {
           this.props.onFocus && this.props.onFocus()
           this.setState({
@@ -166,18 +200,23 @@ export default class SearchableDropDown extends Component {
             item: defaultItemValue,
             listItems: this.props.items
           });
-        } 
-      }, 
+        }
+      },
       {
         key: 'onBlur',
         val: () => {
-          this.props.onBlur && this.props.onBlur(this);
-          this.setState({ focus: false, item: this.props.selectedItems });
+          this.props.onBlur && this.props.onBlur()
+          this.setState({ focus: false })
         }
       },
       {
         key: 'value',
-        val: this.state.item ? this.state.item.name : ''
+        val: this.state.item.title && this.state.item.title !== ''
+          ? this.state.item.title : this.state.item.searchcontacttitle && this.state.item.searchcontacttitle !== ''
+          ? this.state.item.searchcontacttitle : this.state.item.searchtitle && this.state.item.searchtitle !== ''
+            ? this.state.item.searchtitle : this.state.item.emailtitle && this.state.item.emailtitle !== ''
+              ? this.state.item.emailtitle : this.state.item.fulltitle && this.state.item.fulltitle !== ''
+                ? this.state.item.fulltitle : null
       },
       {
         key: 'style',
@@ -193,31 +232,21 @@ export default class SearchableDropDown extends Component {
       }
     ];
     oldSupport.forEach((kv) => {
-      if(!Object.keys(textInputProps).includes(kv.key)) {
-        if(kv.key === 'onTextChange' || kv.key === 'onChangeText') {
+      if (!Object.keys(textInputProps).includes(kv.key)) {
+        if (kv.key === 'onTextChange' || kv.key === 'onChangeText') {
           textInputProps['onChangeText'] = kv.val;
         } else {
           textInputProps[kv.key] = kv.val;
         }
       } else {
-        if(kv.key === 'onTextChange' || kv.key === 'onChangeText') {
+        if (kv.key === 'onTextChange' || kv.key === 'onChangeText') {
           textInputProps['onChangeText'] = kv.val;
         }
       }
     });
     return (
       <TextInput
-      { ...textInputProps }
-      onBlur={(e) => {
-        if (this.props.onBlur) {
-          this.props.onBlur(e);
-        }
-        if (this.props.textInputProps && this.props.textInputProps.onBlur) {
-          this.props.textInputProps.onBlur(e);
-        }
-        this.setState({ focus: false, item: this.props.selectedItems });
-      }
-      }
+        {...textInputProps}
       />
     )
   }
@@ -228,38 +257,46 @@ export default class SearchableDropDown extends Component {
         keyboardShouldPersist="always"
         style={{ ...this.props.containerStyle }}
       >
-        { this.renderSelectedItems() }
-        { this.renderTextInput() }
+        { this.renderSelectedItems()}
+        { this.renderTextInput()}
         {this.renderListType()}
       </View>
     );
   };
-  renderSelectedItems(){
-    let items = this.props.selectedItems || [];
-    if(items !== undefined && items.length > 0 && this.props.chip && this.props.multi){
-     return  <View style={{flexDirection: 'row',  flexWrap: 'wrap', paddingBottom: 10, marginTop: 5 }}>
-                 { items.map((item, index) => {
-                     return (
-                         <View key={index} style={{
-                                 width: (item.name.length * 8) + 60,
-                                 justifyContent: 'center',
-                                 flex: 0,
-                                 backgroundColor: '#eee',
-                                 flexDirection: 'row',
-                                 alignItems: 'center',
-                                 margin: 5,
-                                 padding: 8,
-                                 borderRadius: 15,
-                             }}>
-                             <Text style={{ color: '#555' }}>{item.name}</Text>
-                             <TouchableOpacity onPress={() => setTimeout(() => { this.props.onRemoveItem(item, index) }, 0) } style={{ backgroundColor: '#f16d6b', alignItems: 'center', justifyContent: 'center', width: 25, height: 25, borderRadius: 100, marginLeft: 10}}>
-                                 <Text>X</Text>
-                             </TouchableOpacity>
-                         </View>
-                 )
-             }) 
-         }
-         </View>
+  renderSelectedItems() {
+    let items = this.props.selectedItems;
+    if (items !== undefined && items.length > 0 && this.props.chip && this.props.multi) {
+      return <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 10, marginTop: 5 }}>
+        {items.map((item, index) => {
+          return (
+            <View key={index} style={{
+              width: (
+                item.title && item.title !== ''
+                  ? item.title.length * 8
+                  : item.searchtitle.length * 8) + 60,
+              justifyContent: 'center',
+              flex: 0,
+              backgroundColor: '#eee',
+              flexDirection: 'row',
+              alignItems: 'center',
+              margin: 5,
+              padding: 8,
+              borderRadius: 15,
+            }}>
+              <Text style={{ color: '#555' }}>{item.title && item.title !== ''
+                ? item.title : item.searchcontacttitle && item.searchcontacttitle !== ''
+                ? item.searchcontacttitle : item.searchtitle && item.searchtitle !== ''
+                  ? item.searchtitle : item.emailtitle && item.emailtitle !== ''
+                    ? item.emailtitle : item.fulltitle && item.fulltitle !== ''
+                      ? item.fulltitle : null}</Text>
+              <TouchableOpacity onPress={() => setTimeout(() => { this.props.onRemoveItem(item, index) }, 0)} style={{ backgroundColor: '#f16d6b', alignItems: 'center', justifyContent: 'center', width: 25, height: 25, borderRadius: 100, marginLeft: 10 }}>
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        })
+        }
+      </View>
     }
- }
+  }
 }
